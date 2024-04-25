@@ -13,65 +13,54 @@ client = OpenAI(
 
 @app.route('/')
 def index():
-    # topics = []
-    # depth = 1
-    # user_topic = input("Please enter a topic that you want to know about: ")
-    # topics.append(
-    #     {"role": "user", 
-    #      "content": 'Topic: ' + user_topic + '. Can you show what knowledge I can acquire about the above mentioned topic in a list format? show me only the name of the points and description in python key value pair'
-    #     }
-    # )
-    # chat_completio_response = client.chat.completions.create(
-    #     messages=topics,
-    #     model="gpt-3.5-turbo",
-    # )
-    # response_data = chat_completio_response.choices[0].message.content
-    # response_dict = json.loads(response_data)
-    # key_topis = list(response_dict.keys())
-    # print(key_topis)
-    # print(response_data)
-
+    
     user_entered_topic = input("Please enter a topic that you want to know about: ")
     init_topic = user_entered_topic
     data = []
-    topics = []
-    topics.append(user_entered_topic)
-    count = 0
-    while count < 3:
-        current_iteration_topics = list(topics)
-        for item in current_iteration_topics:
-            print(item)
-            if count == 3:
-                break
-            else:
-                query = [{
-                    "role": "user",
-                    "content" : 'Parent-topic: ' + init_topic + ' Topic: ' + item + '. Can you show what knowledge I can acquire about the above mentioned topic in a list format? show me only the name of the points and description in python dictionary format. Keep the dictionary limited to 3 items'
-                }]
-                chat_completion_response = client.chat.completions.create(
-                    messages=query,
-                    model="gpt-3.5-turbo",
-                )
-                response_data = chat_completion_response.choices[0].message.content.strip('\n').strip()
-                response_dict = json.loads(response_data)
-                key_topis = list(response_dict.keys())
-                value_topics = list(response_dict.values())
-                print(key_topis)
-                # data.append(response_data)
-                query.append({
+
+    topics_to_process = [(init_topic, 0)]  # Initialize with the user-entered topic at level 0
+    visited_topics = set()  # Keep track of visited topics to avoid duplicates
+
+    while topics_to_process:
+        
+        topic, level = topics_to_process.pop(0)  # Pop the topic from the beginning of the list (BFS)
+        print(topic)
+        if level >= 2:
+            break
+
+        if topic not in visited_topics:
+            visited_topics.add(topic)
+
+            query = [{
+                "role": "user",
+                "content": 'Parent-topic: ' + init_topic + ' Topic: ' + topic + '. Can you show what knowledge I can acquire about the above mentioned topic in a list format? show me only the name of the points and description in python dictionary format. Keep the dictionary limited to 3 items. Keys must contain only string, no numerics.'
+            }]
+            chat_completion_response = client.chat.completions.create(
+                messages=query,
+                model="gpt-3.5-turbo",
+            )
+            response_data = chat_completion_response.choices[0].message.content.strip('\n').strip()
+            print(response_data)
+            response_dict = json.loads(response_data)
+
+            key_topics = list(response_dict.keys())
+
+            query.append({
                     "role": "user",
                     "content": response_data
                 })
+            print(key_topics)
 
-                # print(key_topis)
-                # clear the topics list
-                topics.clear()
+            # Append response to data
+            # data.append(response_data)
 
-                # add new topics in topic list
-                for itm in key_topis:
-                    topics.append(itm)
-                
-                count += 1
+            # Add new topics to the topics_to_process list
+            for new_topic in key_topics:
+                topics_to_process.append((new_topic, level + 1))
+
+    # print(data)
+
+    return render_template('index.html', data=data)
     print(data)
             
             
