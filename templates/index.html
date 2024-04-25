@@ -8,5 +8,18 @@
 
 
 {% block body %} 
-<p>{{ data }}</p>
+<h1>JSON Visualization</h1>
+{% for level, level_data in data.items() %}
+        <h2>Level {{ level }}</h2>
+        <ul>
+            {% for topic, topic_data in level_data.items() %}
+                <li>{{ topic }}</li>
+                <ul>
+                    {% for key, value in topic_data.items() %}
+                        <li>{{ key }}: {{ value }}</li>
+                    {% endfor %}
+                </ul>
+            {% endfor %}
+        </ul>
+    {% endfor %}
 {% endblock %}
